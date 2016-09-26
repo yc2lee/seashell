@@ -64,7 +64,7 @@ angular.module('frontend-app')
       maybe_log(err);
       if(err.error_type == "unknown" && err.raw_message === "") { return; }
       var to_print = [];
-      to_print.push("Memory error occurred! Type of error: " + err.error_type);
+      to_print.push("\nMemory error occurred! Type of error: " + err.error_type);
       for (var current_stack = 0; current_stack < err.call_stacks.length; current_stack++) {
         maybe_log('current stack: ' + current_stack);
         var framelist = err.call_stacks[current_stack].framelist;

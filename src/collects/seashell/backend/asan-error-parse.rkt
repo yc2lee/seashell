@@ -114,9 +114,21 @@
                   #f ; global extra info
                   lines-left))))
 
+;; For infinite recursion, ASAN prints out a "AddressSanitizer: stack-overflow on address" line
+;; followed by a very long frame list.
+(define stack-overflow-parser : SectionParser
+  (match-and-process
+   #px"^=+\\d+=+ERROR: AddressSanitizer: stack-overflow on address (0x[[:xdigit:]]+) "
+   (lambda ([error-type : String] [lines : (Listof String)] [match-result : (Listof String)])
+     (define-values (framelist lines-left) (try-parse-stack-frame lines))
+     (SectionData "stack-overflow" ; error type
+                  (jsexpr `((framelist ,framelist)))
+                  #f ; global extra info
+                  lines-left))))
+
 ;; If the student does stack overflow, ASAN prints out a section containing the
 ;; regexp below followed by a frame list
-(define stack-overflow-parser : SectionParser
+(define stack-buffer-overflow-parser : SectionParser
   (match-and-process
    #px"^[[:alpha:]]+ of size (\\d+) at (0x[[:xdigit:]]+) thread T"
    (lambda ([error-type : String] [lines : (Listof String)] [match-result : (Listof String)])
@@ -267,7 +279,7 @@
         (match-type #px"^=+\\d+=+ERROR: AddressSanitizer: stack-use-after-scope"  "stack-use-after-scope")
         (match-type #px"^=+\\d+=+ERROR: LeakSanitizer: detected memory leaks" "memory-leak")
         memory-leak-parser
-        stack-overflow-parser function-info array-parser
+        stack-overflow-parser stack-buffer-overflow-parser function-info array-parser
         heap-address-details global-address-details
         double-free double-free-first-free allocation-details
         free-non-malloc
